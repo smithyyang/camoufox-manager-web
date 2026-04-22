@@ -1,86 +1,91 @@
 🦊 Camoufox WRB (Web Remote Browser)
 
-Camoufox WRB is a high-performance, lightweight Web-based profile manager for Camoufox. It provides an intuitive dashboard to manage multiple browser environments with professional-grade fingerprint protection and secure network routing.
-
-    Note: This is the Web Manager (WRB) version. A Native Desktop version is currently in the planning stage.
-
+Camoufox WRB is a professional-grade, lightweight Web-based profile manager for Camoufox. It allows for unlimited local browser environments with advanced fingerprint protection and a modern dashboard.
 ✨ Key Features
 
-    🛡️ Advanced Fingerprint Spoofing:
+    ✅ Unlimited Profiles: Purely local storage with no account or subscription limits.
 
-        Font Protection: Automatically loads a system-specific font whitelist from fonts.json to prevent leaking host fonts (crucial for Linux power users).
+    ✅ Data Isolation: Each profile has its own independent directory (Cookies, localStorage, and Cache are completely isolated).
 
-        Hardware Emulation: Spoof WebGL vendors, renderers, and CPU hardware concurrency (navigator.hardwareConcurrency).
+    ✅ Deep Fingerprinting Control:
 
-    🌐 Secure Network Routing:
+        OS Spoofing: Mimic Windows, macOS, or Linux.
 
-        Anti-DNS Leak: Automatically converts socks5 to socks5h to force remote DNS resolution at the proxy node, ensuring a 100% clean test on BrowserScan.
+        Font Whitelist: Automatically loads fonts.json to prevent leaking your real system fonts.
 
-        Integrated Proxy Tester: Uses curl to verify connectivity, latency, and geolocational data (ISP, City, Country) for HTTP/SOCKS proxies.
+        Hardware Emulation: Customize Screen Resolution, CPU cores, and WebGL GPU info.
 
-    🧩 Extension Store Integration:
+    ✅ Advanced Networking:
 
-        AMO Search: Browse and search the official Firefox Add-ons (AMO) store directly from the dashboard.
+        Proxy Binding: Independent HTTP/SOCKS4/SOCKS5 configuration per profile.
 
-        One-Click Install: Download .xpi files and distribute them to specific profiles with a single click.
+        Anti-DNS Leak: Automatically converts socks5 to socks5h to force remote DNS resolution, ensuring a clean privacy score.
 
-    💾 Smart Session Memory:
+        Proxy Tester: Built-in latency and geolocation check (City, Country, ISP).
 
-        Session Restore: Automatically records and restores the last open tabs upon the next launch.
+    ✅ Integrated Extension Store:
 
-    ⚙️ System Stability:
+        AMO Integration: Search and install Firefox Add-ons directly from the dashboard.
 
-        Async Log System: Redirects browser stdout/stderr to browser.log files to prevent pipe buffer deadlocks and sudden window crashes.
+        Per-Profile Management: Toggle specific extensions on or off for each environment.
 
-        Zombie Killer: Built-in utility to scan and terminate untracked or orphaned browser processes.
+    ✅ Session Memory: Automatically remembers and restores your last open tabs.
 
-🚀 Getting Started
-Prerequisites
+    ✅ Stability & Tools:
 
-    Python 3.10+
+        Status Tracking: Real-time "Active/Offline" status for every profile.
 
-    curl (required for proxy connectivity tests)
+        Async Logging: Redirects logs to browser.log to prevent browser crashes caused by pipe buffer overflows.
 
-Installation
+        Zombie Killer: One-click cleanup for orphaned browser processes.
 
-    Clone the repository:
+📂 Directory Structure
+Plaintext
+
+camoufox-manager-web/
+├── app.py                # Flask Backend: Core logic & Profile management
+├── requirements.txt      # Python dependencies
+├── extensions/           # Local repository for downloaded .xpi files
+├── templates/
+│   └── index.html        # Frontend Dashboard UI
+└── profiles_data/        # Auto-created; stores all environment data (Ignored by Git)
+    └── <profile_id>/
+        ├── meta.json     # Fingerprint config, tags, and session history
+        ├── browser.log   # Runtime logs to prevent system deadlocks
+        └── userdata/     # Isolated browser profile (Cookies, Cache, etc.)
+
+🚀 Quick Start
+
+    Clone & Setup:
     Bash
 
     git clone https://github.com/smithyyang/camoufox-manager-web.git
     cd camoufox-manager-web
-
-    Set up Virtual Environment:
-    Bash
-
     python3 -m venv venv
-    source venv/bin/activate  # Linux/macOS
-    # .\venv\Scripts\activate # Windows
-
-    Install Dependencies:
-    Bash
-
+    source venv/bin/activate
     pip install -r requirements.txt
 
-    Fetch Browser Binaries (Required for first-time use):
+    Fetch Binaries (Crucial for first run):
     Bash
 
     python3 -m camoufox fetch
 
-Run the Application
-Bash
+    Launch:
+    Bash
 
-python3 app.py
+    python3 app.py
 
-Access the dashboard at http://localhost:7070.
-📂 Project Structure
+    Visit http://localhost:7070 in your browser.
 
-    app.py: Flask backend managing profile lifecycles and AMO API integration.
+⚠️ Important Notes
 
-    profiles_data/: Local storage for environment metadata and browser userdata (automatically ignored by Git).
+    Privacy: The interface only listens on 127.0.0.1 and is not exposed to the network by default.
 
-    extensions/: Local repository for downloaded .xpi extension files.
+    Proxy Advice: It is highly recommended to use a different proxy for each profile to avoid IP correlation.
 
-    templates/index.html: Modern, dark-themed dashboard UI.
+    Firefox Kernel: Since it is based on the Firefox engine, it cannot simulate Chrome-specific internal behaviors.
+
+    Beta Status: As of 2026, Camoufox is still in beta; expect occasional updates and minor instabilities.
 
 📄 License
 
