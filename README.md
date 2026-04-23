@@ -1,4 +1,3 @@
-:::writing{variant="standard" id="readme1"}
 # 👻 SpecterForge WRB  
 **Web Remote Browser Manager for Stealth Browser Environments**
 
@@ -91,4 +90,3 @@ Engines may behave differently across sites
 📄 License
 
 MIT License
-:::
