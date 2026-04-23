@@ -1,6 +1,6 @@
-🦊 Camoufox WRB (Web Remote Browser)
+👻 SpecterForge WRB (Web Remote Browser)
 
-Camoufox WRB is a professional-grade, lightweight Web-based profile manager for Camoufox. It allows for unlimited local browser environments with advanced fingerprint protection and a modern dashboard.
+SpecterForge WRB is a professional-grade, lightweight Web-based profile manager for SpecterForge. It allows for unlimited local browser environments with advanced fingerprint protection and a modern dashboard.
 ✨ Key Features
 
     ✅ Unlimited Profiles: Purely local storage with no account or subscription limits.
@@ -22,6 +22,14 @@ Camoufox WRB is a professional-grade, lightweight Web-based profile manager for 
         Anti-DNS Leak: Automatically converts socks5 to socks5h to force remote DNS resolution, ensuring a clean privacy score.
 
         Proxy Tester: Built-in latency and geolocation check (City, Country, ISP).
+
+    ✅ Multi-Engine Architecture:
+
+        Engine Switch: Per-profile kernel selection (`camoufox` / `patchright`).
+
+        Engine Adapter: Unified launch flow with engine-specific script builders.
+
+        Ext Repository Split: `extensions/xpi/` for Firefox, `extensions/crx/` for Chromium.
 
     ✅ Integrated Extension Store:
 
@@ -45,7 +53,9 @@ Plaintext
 camoufox-manager-web/
 ├── app.py                # Flask Backend: Core logic & Profile management
 ├── requirements.txt      # Python dependencies
-├── extensions/           # Local repository for downloaded .xpi files
+├── extensions/
+│   ├── xpi/              # Firefox extensions (.xpi)
+│   └── crx/              # Chromium extensions (.crx)
 ├── templates/
 │   └── index.html        # Frontend Dashboard UI
 └── profiles_data/        # Auto-created; stores all environment data (Ignored by Git)
@@ -70,6 +80,11 @@ camoufox-manager-web/
 
     python3 -m camoufox fetch
 
+    (Optional) Enable Chromium engine support with Patchright:
+    Bash
+
+    pip install patchright
+
     Launch:
     Bash
 
@@ -83,9 +98,13 @@ camoufox-manager-web/
 
     Proxy Advice: It is highly recommended to use a different proxy for each profile to avoid IP correlation.
 
+    Proxy Guardrails (default allow): launch does not hard-block no-proxy/datacenter-proxy by default, but returns risk warnings. Enable strict mode with `CM_REQUIRE_PROXY=1` and/or `CM_BLOCK_DATACENTER_PROXY=1` if needed.
+
+    DNS Note: with no proxy, both engines now force DoH (TRR-only / Secure DNS) as a best-effort DNS leak mitigation; using a real proxy is still the most reliable approach.
+
     Firefox Kernel: Since it is based on the Firefox engine, it cannot simulate Chrome-specific internal behaviors.
 
-    Beta Status: As of 2026, Camoufox is still in beta; expect occasional updates and minor instabilities.
+    Beta Status: As of 2026, SpecterForge is still in beta; expect occasional updates and minor instabilities.
 
 📄 License
 

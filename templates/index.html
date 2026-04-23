@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Camoufox Manager</title>
+<title>SpecterForge Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;500&display=swap" rel="stylesheet">
@@ -218,7 +218,7 @@ main { overflow:hidden; display:flex; flex-direction:column; background:var(--bg
 
 <div class="app">
   <header>
-    <div class="logo"><span class="logo-fox">🦊</span> Camoufox Profile Manager</div>
+    <div class="logo"><span class="logo-fox">👻</span> SpecterForge Profile Manager</div>
     <div class="header-stats">
       <div class="stat-chip"><span class="dot"></span><span class="val" id="stat-running">0</span> Active</div>
       <div class="stat-chip">Total: <span class="val" id="stat-total">0</span></div>
@@ -240,7 +240,7 @@ main { overflow:hidden; display:flex; flex-direction:column; background:var(--bg
 
   <main id="main">
     <div class="welcome" id="welcome-screen">
-      <div class="welcome-icon">🦊</div>
+      <div class="welcome-icon">👻</div>
       <h2>Select an environment to configure</h2>
       <div style="font-size:13px">Ready for deployment</div>
     </div>
@@ -284,6 +284,13 @@ main { overflow:hidden; display:flex; flex-direction:column; background:var(--bg
 
           <div class="section-heading">Fingerprint Parameters</div>
           <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Browser Engine</label>
+              <select class="form-select" id="fp-engine">
+                <option value="camoufox">SpecterForge (Firefox)</option>
+                <option value="patchright">Patchright (Chromium)</option>
+              </select>
+            </div>
             <div class="form-group">
               <label class="form-label">Operating System</label>
               <select class="form-select" id="fp-os">
@@ -359,7 +366,7 @@ main { overflow:hidden; display:flex; flex-direction:column; background:var(--bg
                   <option value="apple_m1">Apple M1 GPU</option>
                 </optgroup>
               </select>
-              <div class="form-hint">GPU option is saved but currently auto-matched by Camoufox based on OS.</div>
+              <div class="form-hint">GPU option is saved but currently auto-matched by SpecterForge based on OS.</div>
             </div>
           </div>
 
@@ -371,7 +378,7 @@ main { overflow:hidden; display:flex; flex-direction:column; background:var(--bg
                 <input class="form-input" id="fp-proxy" type="text" placeholder="socks5://user:pass@host:port" style="font-family:var(--font-mono);flex:1"/>
                 <button class="btn btn-save" id="btn-proxy-test" onclick="testProxy()" style="white-space:nowrap;flex-shrink:0">⚡ Test</button>
               </div>
-              <div class="form-hint">Supports HTTP, HTTPS, SOCKS4, SOCKS5. Use socks5h:// to route DNS through proxy.</div>
+              <div class="form-hint">Required for launch (anti-detect mode). Supports HTTP/HTTPS/SOCKS4/SOCKS5. DNS-leak hardening is applied automatically per engine.</div>
               <div id="proxy-result" style="display:none;margin-top:10px;padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);font-family:var(--font-mono);font-size:12px;line-height:1.8;background:var(--bg-app)"></div>
             </div>
           </div>
@@ -445,7 +452,7 @@ main { overflow:hidden; display:flex; flex-direction:column; background:var(--bg
             <!-- Right: AMO store -->
             <div class="amo-panel">
               <div class="amo-header">
-                <span style="font-size:18px">🦊</span>
+                <span style="font-size:18px">👻</span>
                 <input class="amo-search-input" id="amo-search" type="text" placeholder="Search Firefox Add-ons (e.g. ublock, tampermonkey, dark reader)…"
                   onkeydown="if(event.key==='Enter')searchAMO()" />
                 <button class="btn btn-save" style="flex-shrink:0;white-space:nowrap" onclick="searchAMO()">Search AMO</button>
@@ -478,11 +485,18 @@ main { overflow:hidden; display:flex; flex-direction:column; background:var(--bg
 <!-- Create modal -->
 <div class="overlay" id="create-overlay">
   <div class="modal">
-    <div class="modal-title">🦊 Initialize Profile</div>
+    <div class="modal-title">👻 Initialize Profile</div>
     <div class="form-grid">
       <div class="form-group span2">
         <label class="form-label">Identifier Name</label>
         <input class="form-input" id="new-name" type="text" placeholder="e.g. Env_TikTok_01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Browser Engine</label>
+        <select class="form-select" id="new-engine">
+          <option value="camoufox">SpecterForge (Firefox)</option>
+          <option value="patchright">Patchright (Chromium)</option>
+        </select>
       </div>
       <div class="form-group">
         <label class="form-label">Target OS</label>
@@ -524,7 +538,7 @@ let currentId = null;
 let currentMeta = null;
 let tags = [];
 let profileExtensions = [];   // filenames enabled for current profile
-let allExtensions = [];        // all local .xpi files
+let allExtensions = [];        // all local extension packages for current engine
 let statusPollInterval = null;
 let amoPage = 1;
 let amoQuery = '';
@@ -534,6 +548,10 @@ async function init() {
   await loadProfiles();
   document.getElementById('tag-input').addEventListener('keydown', onTagKeydown);
   document.getElementById('new-name').addEventListener('keydown', e => { if (e.key==='Enter') createProfile(); });
+  document.getElementById('fp-engine').addEventListener('change', () => {
+    if (currentMeta) currentMeta.engine = currentEngine();
+    if (document.getElementById('tab-extensions').style.display !== 'none') loadExtensionsTab();
+  });
   document.getElementById('create-overlay').addEventListener('click', e => { if (e.target===e.currentTarget) closeCreateModal(); });
   startStatusPolling();
 }
@@ -557,6 +575,17 @@ async function api(method, url, body) {
   if (body !== undefined) opts.body = JSON.stringify(body);
   const r = await fetch(url, opts);
   return r.json();
+}
+
+function normalizeEngine(engine) {
+  return (engine === 'patchright') ? 'patchright' : 'camoufox';
+}
+
+function currentEngine() {
+  const sel = document.getElementById('fp-engine');
+  if (sel && sel.value) return normalizeEngine(sel.value);
+  if (currentMeta && currentMeta.engine) return normalizeEngine(currentMeta.engine);
+  return 'camoufox';
 }
 
 // ── Profiles ──────────────────────────────────────────────────────────────────
@@ -592,11 +621,13 @@ function renderProfileList(list) {
     return;
   }
   const osIcons = { windows: '⊞', macos: '', linux: '🐧' };
+  const engineText = { camoufox: 'Firefox', patchright: 'Chromium' };
   el.innerHTML = list.map(p => {
     const tagsHtml = (p.tags || []).slice(0,2).map(t => `<span class="tag">${esc(t)}</span>`).join('');
+    const eng = normalizeEngine(p.engine);
     return `<div class="profile-item ${p.id===currentId?'active':''}" onclick="selectProfile('${p.id}')">
       <div class="pi-name">${p.is_running?'<span class="pi-running"></span>':''} ${esc(p.name)}</div>
-      <div class="pi-meta"><span class="pi-os">${osIcons[p.os]||'❖'} ${p.os}</span>${tagsHtml}</div>
+      <div class="pi-meta"><span class="pi-os">${osIcons[p.os]||'❖'} ${p.os} · ${engineText[eng] || eng}</span>${tagsHtml}</div>
     </div>`;
   }).join('');
 }
@@ -614,6 +645,7 @@ async function selectProfile(id) {
 function populateDetail(meta) {
   document.getElementById('detail-name').value = meta.name;
   document.getElementById('detail-id').textContent = `ID: ${meta.id}`;
+  document.getElementById('fp-engine').value = normalizeEngine(meta.engine);
   document.getElementById('fp-os').value = meta.os || 'windows';
   document.getElementById('fp-locale').value = meta.locale || 'en-US';
   document.getElementById('fp-screen').value = (meta.fingerprint||{}).screen || '1920x1080';
@@ -679,7 +711,11 @@ async function launchProfile(gotoUrl = '') {
     const body = gotoUrl ? { goto_url: gotoUrl } : {};
     const r = await api('POST', `/api/profiles/${currentId}/launch`, body);
     if (r.error) { notify(r.error, 'err'); }
-    else { notify('Environment deployed successfully', 'ok'); updateStatusUI(true); }
+    else {
+      notify('Environment deployed successfully', 'ok');
+      if (r.warning) notify(r.warning, 'err');
+      updateStatusUI(true);
+    }
   } catch { notify('Deployment failed', 'err'); }
   finally { btn.disabled = false; btn.textContent = '▶ Launch'; }
 }
@@ -696,6 +732,7 @@ async function saveProfile() {
   if (!currentId) return;
   const payload = {
     name:       document.getElementById('detail-name').value,
+    engine:     currentEngine(),
     os:         document.getElementById('fp-os').value,
     locale:     document.getElementById('fp-locale').value,
     screen:     document.getElementById('fp-screen').value,
@@ -732,6 +769,7 @@ async function createProfile() {
   const name = document.getElementById('new-name').value.trim() || 'New Environment';
   const r = await api('POST', '/api/profiles', {
     name,
+    engine: document.getElementById('new-engine').value,
     os:     document.getElementById('new-os').value,
     locale: document.getElementById('new-locale').value,
   });
@@ -779,27 +817,48 @@ function switchTab(tabEl, tabId) {
 
 // ── Extensions Tab ────────────────────────────────────────────────────────────
 async function loadExtensionsTab() {
-  // Load all local .xpi files
+  const engine = currentEngine();
+  renderStoreModeHint(engine);
+  // Load local extension packages for selected engine
   try {
-    allExtensions = await api('GET', '/api/extensions');
+    allExtensions = await api('GET', `/api/extensions?engine=${encodeURIComponent(engine)}`);
   } catch { allExtensions = []; }
+  const available = new Set(allExtensions.map(e => e.filename));
+  profileExtensions = profileExtensions.filter(f => available.has(f));
   renderProfileExtList();
+}
+
+function renderStoreModeHint(engine) {
+  const box = document.getElementById('amo-results');
+  if (engine === 'patchright') {
+    box.innerHTML = `<div class="amo-placeholder">
+      Chromium mode selected.<br>
+      AMO search is Firefox-only. Put <code>.crx</code> files into <code>extensions/crx/</code>, then enable them on the left.
+    </div>`;
+  }
 }
 
 function renderProfileExtList() {
   const el = document.getElementById('profile-ext-list');
+  const engine = currentEngine();
+  const extLabel = engine === 'patchright' ? '.crx' : '.xpi';
   if (!allExtensions.length) {
     el.innerHTML = `<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">
-      No extensions downloaded yet.<br>Search and install from the store →
+      No ${extLabel} extensions found for this engine.
     </div>`;
     return;
   }
   el.innerHTML = allExtensions.map(e => {
     const enabled = profileExtensions.includes(e.filename);
+    const pretty = e.filename
+      .replace(/\.xpi$/i, '')
+      .replace(/\.crx$/i, '')
+      .replace(/-[\d.]+$/, '')
+      .replace(/_/g, ' ');
     return `<div class="ext-item">
       <div class="ext-item-icon">🧩</div>
       <div class="ext-item-info">
-        <div class="ext-item-name" title="${esc(e.filename)}">${esc(e.filename.replace(/-[\d.]+\.xpi$/,'').replace(/_/g,' '))}</div>
+        <div class="ext-item-name" title="${esc(e.filename)}">${esc(pretty)}</div>
         <div class="ext-item-meta">${e.size_kb} KB</div>
       </div>
       <button class="ext-toggle ${enabled?'on':'off'}" onclick="toggleExtension('${esc(e.filename)}')" title="${enabled?'Disable':'Enable'} for this profile"></button>
@@ -814,7 +873,7 @@ async function toggleExtension(filename) {
     profileExtensions.push(filename);
   }
   // Auto-save extension list
-  await api('PUT', `/api/profiles/${currentId}/extensions`, { extensions: profileExtensions });
+  await api('PUT', `/api/profiles/${currentId}/extensions`, { extensions: profileExtensions, engine: currentEngine() });
   notify(profileExtensions.includes(filename) ? `Enabled for this profile` : `Disabled for this profile`, 'ok');
   renderProfileExtList();
 }
@@ -822,6 +881,10 @@ async function toggleExtension(filename) {
 // ── "Add Extension" button: launch browser → AMO store ───────────────────────
 async function openAddExtension() {
   if (!currentId) return;
+  if (currentEngine() !== 'camoufox') {
+    notify('AMO store is only available for SpecterForge/Firefox engine', 'err');
+    return;
+  }
   const AMO_URL = 'https://addons.mozilla.org/firefox/extensions/';
   const isRunning = profiles.find(p => p.id === currentId)?.is_running;
 
@@ -837,6 +900,10 @@ async function openAddExtension() {
 
 // ── AMO search ────────────────────────────────────────────────────────────────
 async function searchAMO(page = 1) {
+  if (currentEngine() !== 'camoufox') {
+    renderStoreModeHint(currentEngine());
+    return;
+  }
   const q = document.getElementById('amo-search').value.trim();
   if (!q) return;
   amoQuery = q;
@@ -846,7 +913,7 @@ async function searchAMO(page = 1) {
   el.innerHTML = `<div class="amo-placeholder"><div class="amo-spinner"></div><div style="margin-top:12px">Searching Firefox Add-ons…</div></div>`;
 
   try {
-    const r = await api('POST', '/api/extensions/search', { q, page });
+    const r = await api('POST', '/api/extensions/search', { q, page, engine: currentEngine() });
     if (r.error) {
       el.innerHTML = `<div class="amo-placeholder" style="color:var(--danger)">⚠ ${esc(r.error)}</div>`;
       return;
@@ -914,11 +981,15 @@ function renderAMOResults(data) {
 }
 
 async function downloadAMOExtension(downloadUrl, filename, btn) {
+  if (currentEngine() !== 'camoufox') {
+    notify('AMO install is only available for SpecterForge engine', 'err');
+    return;
+  }
   btn.disabled = true;
   btn.textContent = '↓ Downloading…';
 
   try {
-    const r = await api('POST', '/api/extensions/install', { download_url: downloadUrl, filename });
+    const r = await api('POST', '/api/extensions/install', { download_url: downloadUrl, filename, engine: currentEngine() });
     if (r.error) {
       notify(`Install failed: ${r.error}`, 'err');
       btn.disabled = false;
@@ -946,20 +1017,23 @@ async function downloadAMOExtension(downloadUrl, filename, btn) {
 // ── Proxy test ────────────────────────────────────────────────────────────────
 async function testProxy() {
   const proxy = document.getElementById('fp-proxy').value.trim();
+  const engine = currentEngine();
   const btn = document.getElementById('btn-proxy-test');
   const result = document.getElementById('proxy-result');
   btn.disabled = true; btn.textContent = 'Testing…'; result.style.display='none';
   try {
-    const r = await api('POST', '/api/proxy-test', { proxy });
+    const r = await api('POST', '/api/proxy-test', { proxy, engine });
     result.style.display = 'block';
     if (r.ok) {
       const flag = countryFlag(r.country);
+      const qualityColor = r.datacenter_detected ? 'var(--danger)' : 'var(--success)';
       result.style.borderColor = 'rgba(16,185,129,.3)';
       result.innerHTML = `
         <div style="color:var(--success);font-weight:600;margin-bottom:6px">✓ Connection Successful</div>
         <div><span style="color:var(--text-muted)">IP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span style="color:var(--text-main)">${esc(r.ip)}</span></div>
         <div><span style="color:var(--text-muted)">Location</span> <span style="color:var(--text-main)">${flag} ${esc(r.city)}, ${esc(r.region)}, ${esc(r.country)}</span></div>
         <div><span style="color:var(--text-muted)">ISP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span style="color:var(--text-main)">${esc(r.org)}</span></div>
+        <div><span style="color:var(--text-muted)">Quality&nbsp;</span> <span style="color:${qualityColor}">${r.proxy_quality || 'unknown'}</span></div>
         <div><span style="color:var(--text-muted)">Latency&nbsp;</span> <span style="color:${r.latency<300?'var(--success)':r.latency<800?'var(--accent)':'var(--danger)'}">${r.latency} ms</span></div>`;
     } else {
       result.style.borderColor = 'rgba(239,68,68,.3)';

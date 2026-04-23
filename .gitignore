@@ -10,3 +10,17 @@ __pycache__/
 *.bak
 .vscode/
 .idea/
+
+# 虚拟环境
+venv/
+
+# 运行生成的配置、缓存和浏览器数据
+profiles_data/
+
+# 临时备份文件
+*.bak*
+app.py.bak_copi
+
+# Python 编译缓存
+__pycache__/
+*.pyc
